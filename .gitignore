@@ -1,5 +1,6 @@
-# 大型模型檔（27MB，超過 GitHub 25MB 限制）
+# 模型檔（二進位，不追蹤）
 demo/rps_svm_model.pkl
+demo/rps_mediapipe_svm_model.pkl
 
 # Python
 __pycache__/
