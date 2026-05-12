@@ -272,3 +272,79 @@ git add chat.md log.md
 git commit -m "docs: 新增 chat.md 執行說明，更新 log.md 對話紀錄"
 git push hw4 main
 ```
+
+---
+
+## 對話 10：推薦其他兩個模型
+
+**USER：** 我要使用其他兩個模型，讓test.py準確率提高，請推薦我其他模型
+
+**AI：** 分析問題並推薦以下兩個模型（皆搭配 MediaPipe 63 維關節點特徵）：
+
+| 模型 | 架構說明 | 差異（vs SVM） |
+|------|----------|---------------|
+| **Random Forest** | 300 棵決策樹投票集成 | 集成學習 vs 最大間距超平面 |
+| **MLP 神經網路** | 63 → 256 → 128 → 64 → 3，ReLU + Adam | 多層非線性激活 vs 核函數映射 |
+
+---
+
+## 對話 11：實作兩個新模型
+
+**USER：** 直接幫我實作
+
+**AI：** 建立以下三個新檔案並依序執行訓練：
+
+### 新增檔案
+
+| 檔案 | 說明 |
+|------|------|
+| `train/train_rf.py` | Random Forest 訓練腳本，`n_estimators=300, class_weight='balanced'` |
+| `train/train_mlp.py` | MLP 訓練腳本，架構 63→256→128→64→3，`lr=0.0005, alpha=0.001` |
+| `demo/compare_models.py` | 三模型統一評估腳本，輸出排名 |
+
+### 執行方式
+
+```bash
+# 訓練
+cd RSP_demo/train
+python3 train_rf.py
+python3 train_mlp.py
+
+# 比較
+cd RSP_demo/demo
+python3 compare_models.py
+```
+
+### 最終比較結果
+
+| 排名 | 模型 | Accuracy | Rock F1 | Paper F1 | Scissors F1 |
+|------|------|----------|---------|----------|-------------|
+| 🥇 | SVM (MediaPipe) | **84.95%** | 0.82 | 0.71 | 1.00 |
+| 🥈 | MLP 神經網路 | 71.51% | 0.77 | 0.27 | 0.88 |
+| 🥉 | Random Forest | 52.15% | 0.58 | 0.36 | 0.52 |
+
+### 分析
+
+- **SVM 最佳**：RBF kernel 對低維度結構化特徵（63 維關節點）泛化能力最強
+- **RF/MLP 偏低**：訓練集 Rock 有 99 張 MediaPipe 偵測失敗（只剩 741 張），導致類別不平衡，Paper recall 極低
+
+---
+
+## 對話 12：更新 log.md 並推上 GitHub
+
+**USER：** 幫我更新log.md並推上github
+
+**AI：** 更新 `log.md`（新增對話 10、11、12），一併推送以下檔案：
+
+| 檔案 | 說明 |
+|------|------|
+| `train/train_rf.py` | 新增：Random Forest 訓練腳本 |
+| `train/train_mlp.py` | 新增：MLP 訓練腳本 |
+| `demo/compare_models.py` | 新增：三模型統一評估腳本 |
+| `log.md` | 更新：補充對話 10、11、12 |
+
+```bash
+git add train/train_rf.py train/train_mlp.py demo/compare_models.py log.md
+git commit -m "feat: 新增 RF / MLP 訓練腳本與三模型比較腳本，更新 log.md"
+git push hw4 main
+```
