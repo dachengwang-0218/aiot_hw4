@@ -14,8 +14,12 @@ LABEL_NAMES = {0: 'Rock  🪨', 1: 'Paper  📄', 2: 'Scissors  ✂️'}
 LABEL_COLOR = {
     0: (60,  60,  220),   # Rock     → 紅
     1: (50,  200,  50),   # Paper    → 綠
-    2: (220, 180,   0),   # Scissors → 藍(橘黃)
+    2: (220, 180,   0),   # Scissors → 橘黃
 }
+ERROR_COLOR = (80, 80, 80)            # Error → 灰色
+
+# 信心度閾値：低於此値則顯示 Error
+CONFIDENCE_THRESHOLD = 0.80          # 可依需要自行調整
 
 # MediaPipe 連線定義（用來手動畫連線）
 HAND_CONNECTIONS = [
@@ -63,17 +67,29 @@ def draw_landmarks(frame, lm_norm, h, w, color):
         cv2.circle(frame, (px, py), 6, (50, 50, 50), 1, cv2.LINE_AA)
 
 # ── UI 疊加 ────────────────────────────────────────────────────────────────────
-def draw_ui(frame, label_idx, confidence):
+def draw_ui(frame, label_idx, confidence, is_error=False):
     h, w  = frame.shape[:2]
-    color = LABEL_COLOR[label_idx]
-    name  = LABEL_NAMES[label_idx]
+
+    if is_error:
+        color = ERROR_COLOR
+        text  = f"Error ❓   {confidence*100:.1f}%"
+    else:
+        color = LABEL_COLOR[label_idx]
+        text  = f"{LABEL_NAMES[label_idx]}   {confidence*100:.1f}%"
 
     overlay = frame.copy()
     cv2.rectangle(overlay, (0, 0), (w, 72), (15, 15, 15), -1)
     cv2.addWeighted(overlay, 0.55, frame, 0.45, 0, frame)
 
-    cv2.putText(frame, f"{name}   {confidence*100:.1f}%",
+    cv2.putText(frame, text,
                 (16, 50), cv2.FONT_HERSHEY_DUPLEX, 1.2, color, 2, cv2.LINE_AA)
+
+    # Error 狀態額外顯示小提示
+    if is_error:
+        cv2.putText(frame, "Low confidence — adjust your gesture",
+                    (16, 68), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.45, (120, 120, 120), 1, cv2.LINE_AA)
+
     cv2.putText(frame, "Press 'q' to quit",
                 (w - 220, h - 14), cv2.FONT_HERSHEY_SIMPLEX,
                 0.55, (150, 150, 150), 1, cv2.LINE_AA)
@@ -130,13 +146,15 @@ def main():
             except Exception:
                 confidence = 1.0
 
-            color = LABEL_COLOR[label_idx]
+            # 信心度判斷
+            is_error = confidence < CONFIDENCE_THRESHOLD
+            dot_color = ERROR_COLOR if is_error else LABEL_COLOR[label_idx]
 
             # ② 畫關節點與連線
-            draw_landmarks(frame, lm_norm, h, w, color)
+            draw_landmarks(frame, lm_norm, h, w, dot_color)
 
             # ③ 疊加 UI
-            draw_ui(frame, label_idx, confidence)
+            draw_ui(frame, label_idx, confidence, is_error=is_error)
 
         else:
             cv2.putText(frame, "No hand detected — show your hand!",
