@@ -1,6 +1,5 @@
-# 模型檔（二進位，不追蹤）
-demo/rps_svm_model.pkl
-demo/rps_mediapipe_svm_model.pkl
+# 模型檔（已追蹤，直接推上 GitHub）
+# rps_svm_model.pkl 約 26MB，其餘均小於 2MB
 
 # Python
 __pycache__/
