@@ -348,3 +348,101 @@ git add train/train_rf.py train/train_mlp.py demo/compare_models.py log.md
 git commit -m "feat: 新增 RF / MLP 訓練腳本與三模型比較腳本，更新 log.md"
 git push hw4 main
 ```
+
+---
+
+## 對話 13：推上 pkl 檔
+
+**USER：** 幫我把pkl檔也推上github
+
+**AI：** 確認各 pkl 大小後，從 `.gitignore` 移除排除規則，強制加入並推送：
+
+| 檔案 | 大小 | 結果 |
+|------|------|------|
+| `rps_svm_model.pkl` | 26 MB | ✅（初始 push 已含，遠端確認 27,721,123 bytes）|
+| `rps_mediapipe_svm_model.pkl` | 32 KB | ✅ 本次推送 |
+| `rps_mlp_model.pkl` | 1.3 MB | ✅ 本次推送 |
+| `rps_rf_model.pkl` | 1.3 MB | ✅ 本次推送 |
+
+---
+
+## 對話 14：SVM vs MediaPipe 概念釐清
+
+**USER：** svm, mediapipe, mlp, rf是不同模型嗎
+
+**AI：** 釐清重要概念：
+
+- **MediaPipe** ≠ 模型，是**特徵提取工具**（偵測 21 個手部關節點）
+- **SVM / RF / MLP** 才是**分類模型**
+
+實際上有 **3 種模型架構** × **2 種特徵方式** = 4 個 pkl：
+
+| pkl 檔 | 特徵 | 分類器 |
+|--------|------|--------|
+| `rps_svm_model.pkl` | 原始像素 4096 維 | SVM |
+| `rps_mediapipe_svm_model.pkl` | 關節點 63 維 | SVM |
+| `rps_rf_model.pkl` | 關節點 63 維 | Random Forest |
+| `rps_mlp_model.pkl` | 關節點 63 維 | MLP |
+
+---
+
+## 對話 15：MediaPipe SVM vs 原始像素 SVM 差異說明
+
+**USER：** 為什麼mediapipe測出來的結果和svm的不一樣
+
+**AI：** 解釋特徵品質差異：
+
+| 特徵方式 | 維度 | 問題 | 準確率 |
+|----------|------|------|--------|
+| 原始像素（灰階） | 4096 維 | 背景/光線/位置敏感 | 68.28% |
+| MediaPipe 關節點 | 63 維 | 僅手部骨架，無背景干擾 | **84.95%** |
+
+比喻：原始像素 SVM 像看整張照片辨識貓狗（含背景）；MediaPipe SVM 像只看骨架辨識（更純淨的資訊）。
+
+---
+
+## 對話 16：新增 Error 手勢狀態
+
+**USER：** 幫我在carema.py中新增錯誤手勢(Error)，當accuracy小於一定程度時，變成error
+
+**AI：** 在 `demo/carema.py` 新增以下邏輯：
+
+```python
+ERROR_COLOR = (80, 80, 80)       # 灰色
+CONFIDENCE_THRESHOLD = 0.60      # 信心度低於 60% → Error
+```
+
+主迴圈判斷：
+
+```python
+is_error = confidence < CONFIDENCE_THRESHOLD
+dot_color = ERROR_COLOR if is_error else LABEL_COLOR[label_idx]
+draw_landmarks(frame, lm_norm, h, w, dot_color)
+draw_ui(frame, label_idx, confidence, is_error=is_error)
+```
+
+顯示效果：
+
+| 狀態 | 顯示文字 | 顏色 |
+|------|---------|------|
+| 正常 | `Rock 🪨  85.3%` | 紅/綠/橘黃 |
+| **Error** | `Error ❓  42.1%` + `Low confidence — adjust your gesture` | 灰色 |
+
+---
+
+## 對話 17：更新 log.md 並推上 GitHub
+
+**USER：** 更新log.md並推上github
+
+**AI：** 更新 `log.md`（新增對話 13–17），推送以下更新：
+
+| 檔案 | 說明 |
+|------|------|
+| `demo/carema.py` | 新增 Error 狀態（信心度 < 60%）|
+| `log.md` | 更新：補充對話 13–17 |
+
+```bash
+git add demo/carema.py log.md
+git commit -m "feat: carema.py 新增 Error 狀態，更新 log.md"
+git push hw4 main
+```
